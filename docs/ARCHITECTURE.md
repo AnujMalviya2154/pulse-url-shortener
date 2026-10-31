@@ -88,7 +88,7 @@ sequenceDiagram
   W-->>MQ: Ack after durable success
 ```
 
-The exact sequencing between responding to the visitor and publishing the event is an implementation decision that must be explicitly tested. The product prioritizes redirect availability, but the event-loss window must not be hidden. If event delivery requirements later demand stronger guarantees, evaluate a transactional outbox ADR.
+The redirect response takes absolute priority over analytics publication. The API attempts publication to RabbitMQ with a bounded wait budget (50ms is an initial illustrative candidate budget to be calibrated in M4). If the broker is unreachable, publication fails deterministically and the event is dropped. If the wait budget expires before a publisher confirmation arrives, the outcome is indeterminate: the message may still reach the broker or queue later. The redirect proceeds immediately at the deadline. Pre-confirmation event loss and timeout frequency must be observable through structured diagnostics. When the broker accepts the message with publisher confirms, mandatory routing ensures it reaches a queue. A transactional outbox is documented as a future enhancement if measured event loss proves unacceptable; it is not included in the initial MVP.
 
 ## 5. Cache strategy
 
@@ -148,7 +148,7 @@ Do not persist raw IP by default. Any derived device/browser fields should be pr
 | Failure | Expected behaviour | Evidence required |
 |---|---|---|
 | Redis unavailable | Redirect falls back to PostgreSQL; cache-dependent rate limiting has a deliberate fallback policy | Integration/failure test and structured warning |
-| RabbitMQ unavailable | Valid redirect remains available where possible; event may be lost unless a future durable handoff is approved | Failure test, event-loss metric/log, documented limitation |
+| RabbitMQ unavailable / timeout | Valid redirect proceeds; publish failure drops event, while timeout leaves delivery indeterminate (handled safely by consumer idempotency per ADR-006). No transactional outbox in MVP. | Failure test, event-loss/timeout metric/log, documented limitation |
 | Worker down | Queue retains messages within configured broker durability/retention policy; redirect continues | Stop/restart worker and verify recovery |
 | Duplicate event | No double counting | Replay same event ID and verify result |
 | Worker crash before ack | Message can be redelivered; idempotency prevents double count | Crash/retry test |

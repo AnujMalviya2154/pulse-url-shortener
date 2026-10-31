@@ -119,7 +119,7 @@ Priority labels: **P0** required for MVP; **P1** desirable after core; **P2** fu
 | FR-07 | Delete a link | P0 | Owner-only deletion; deletion semantics and analytics retention are documented |
 | FR-08 | Public redirect by short code | P0 | Active, non-expired code redirects to stored destination |
 | FR-09 | Invalid/expired/disabled response | P0 | Safe, clear response; no stack traces or internal details leak |
-| FR-10 | Asynchronous click-event publication | P0 | Event includes stable ID and version; redirect path does not wait for analytics aggregation |
+| FR-10 | Asynchronous click-event publication | P0 | Event includes stable ID and version; publication has bounded wait — redirect proceeds at deadline regardless of broker confirmation; timeouts are indeterminate; confirmed messages processed at-least-once with idempotent consumer |
 | FR-11 | Idempotent event processing | P0 | Duplicate event delivery does not double-count |
 | FR-12 | Basic analytics view | P0 | Owner-only metrics; totals and a time series are available |
 | FR-13 | Custom alias | P1 | Reserved words, character rules and collisions are handled safely |
@@ -140,7 +140,7 @@ Priority labels: **P0** required for MVP; **P1** desirable after core; **P2** fu
 ### Reliability
 
 - Redis failure must have a documented PostgreSQL fallback.
-- RabbitMQ/worker failure must not unnecessarily prevent valid redirects; analytics loss/degradation must be logged and made visible.
+- RabbitMQ or worker failure must not prevent valid redirects. Analytics publication has a bounded wait budget; timeouts represent indeterminate publication outcomes rather than confirmed drops, and late deliveries are safely deduplicated. Post-confirmation processing uses at-least-once semantics with idempotent consumers and dead-letter queue routing for poison messages. Event loss and degradation must be logged and made observable.
 - Worker processing must handle redelivery, duplicate messages and poison messages.
 - Health/readiness endpoints must distinguish process health from dependency readiness where appropriate.
 
@@ -199,11 +199,11 @@ The following are intentionally not silently decided in the PRD:
 
 1. Authentication model and session implementation (password/session strategy, cookie policy, password hashing choice).
 2. Redirect HTTP status (temporary vs permanent) and cache/browser semantics.
-3. Custom aliases and expiry inclusion in MVP or early P1.
+3. ~~Custom aliases and expiry inclusion in MVP or early P1.~~ **Decided 1 Nov 2026:** deferred to P1. Core MVP ships without them.
 4. Analytics retention period and deletion interaction.
 5. Exact metadata fields stored per click and aggregation granularity.
 6. Abuse-report UX, operator role and takedown audit model.
-7. Whether publisher-confirmed delivery is sufficient for the first release or whether a transactional outbox is justified.
+7. ~~Whether publisher-confirmed delivery is sufficient for the first release or whether a transactional outbox is justified.~~ **Decided 1 Nov 2026:** best-effort bounded publication accepted for MVP with indeterminate timeout semantics. Transactional outbox documented as a future enhancement if measurements show unacceptable event loss. See ADR-006.
 8. Exact performance SLO after baseline testing.
 
 Track these in [`milestones/M0/M0-OPEN-QUESTIONS.md`](milestones/M0/M0-OPEN-QUESTIONS.md) and resolve or defer explicitly.

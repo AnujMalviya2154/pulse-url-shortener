@@ -210,7 +210,7 @@ Caching details to design and test: TTL policy, inactive/expired link handling, 
 5. Transient failures retry with bounded policy; poison messages go to a dead-letter path for inspection rather than looping forever.
 6. Consumer is idempotent because at-least-once delivery may redeliver messages. A unique event ID or equivalent deduplication constraint prevents double counting.
 
-Never claim exactly-once processing. The baseline expectation is **at-least-once delivery with idempotent processing**, with documented limitations. Evaluate whether an outbox is justified after measuring the durability gap between redirect response and broker publication. Do not add an outbox automatically without an ADR: it increases write-path complexity and should be justified by delivery requirements.
+Never claim exactly-once processing or end-to-end at-least-once delivery for every redirect. The analytics reliability contract has distinct stages: **best-effort bounded publication** (redirect proceeds regardless of broker confirmation; publication timeouts are indeterminate rather than definitive drops; pre-broker loss is accepted and observable) and **at-least-once processing of confirmed, routed messages** (idempotent consumer with durable acknowledgement and dead-letter routing for poison messages). A transactional outbox is a documented future enhancement if measured pre-confirmation event loss proves unacceptable; it is not included in the initial MVP. See ADR-006.
 
 ## 7. Data and product model direction
 

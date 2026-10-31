@@ -14,9 +14,9 @@ M0 is intentionally documentation-led. It prevents the project from beginning as
 - [x] Workspace guardrails provided (`AGENTS.md`, `.agents/rules/implementation-workflow.md`).
 - [x] First ADR set created (`docs/decisions/`).
 - [x] Open questions and M1 first-session plan recorded.
-- [ ] Owner has reviewed and approved the baseline.
-- [ ] Every open question is resolved or explicitly deferred with rationale.
-- [ ] M1 plan is approved.
+- [x] Owner has reviewed and approved the baseline. *(1 Nov 2026)*
+- [x] Every open question is resolved or explicitly deferred with rationale. *(1 Nov 2026 — see M0-OPEN-QUESTIONS.md decision log)*
+- [ ] M1 implementation plan authorized. *(Plan prepared in docs/milestones/M1/M1-PLAN.md; implementation authorization pending)*
 
 The checkboxes above describe document preparation status at handoff time; the final three owner-review steps are deliberately left open.
 

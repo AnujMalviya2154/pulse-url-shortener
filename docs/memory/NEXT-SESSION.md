@@ -1,36 +1,63 @@
 # Next session — start here
 
-**Target start:** 1 November 2026
-**Starting milestone:** M0 review, then M1 planning (not feature coding yet)
+**Current milestone:** M1 — Repository and runtime foundation
+**Prerequisite:** M0 documentation sign-off completed and approved by owner. M1 implementation authorization pending.
 
-## First 15–30 minutes
+## Session goal
 
-1. Open the Pulse repository folder in Antigravity as the workspace root.
-2. Confirm the agent has loaded root `AGENTS.md` and `.agents/rules/implementation-workflow.md` (ask it to summarise the project guardrails and report which files it read).
-3. Ask the agent to read `docs/ANTIGRAVITY-HANDOFF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY-CHECKLIST.md`, and the ADRs.
-4. Review `docs/milestones/M0/M0-OPEN-QUESTIONS.md`; resolve or explicitly defer each decision.
-5. Update `docs/memory/CURRENT-STATUS.md` with owner decisions and date.
-6. Approve M0 sign-off only after the review. Then ask for a small M1 implementation plan.
+Upon owner authorization, execute M1 implementation: pnpm workspaces with exact pinned version, strict TypeScript tooling, ESLint 10 flat config (`eslint.config.mjs`), Docker Compose infrastructure bound to `127.0.0.1` with required `.env` credentials, Express 5.3 API skeleton with Helmet, Next.js 16.4.3 skeleton, worker skeleton, process liveness (`/health`) and startup readiness (`/ready`) endpoints, Vitest 5.x + Supertest test harness, full-SHA GitHub Actions CI pipeline, and setup documentation.
 
-## Prompt to paste into Antigravity
+## Before writing code
 
-```text
-We are resuming the Pulse project. Do not start coding yet.
+1. Confirm the agent has loaded `AGENTS.md` and `.agents/rules/implementation-workflow.md`.
+2. Read `docs/milestones/M1/M1-PLAN.md` for approved scope, file structure and exit criteria.
+3. Verify current exact patch versions and peer compatibility immediately before installing:
+   - Node.js 24 Maintenance LTS baseline (with Node 26 Active LTS alternative documented)
+   - Exact pnpm version to pin in `packageManager` (e.g. `pnpm@12.x.y`)
+   - Next.js 16.4.3 / React 19.3.1
+   - Express 5.3.x / Helmet 8.0.x
+   - Drizzle ORM 0.45.x / Drizzle Kit 0.31.x
+   - Zod 4.x / 3.24.x peer compatibility check
+   - Vitest 5.x
+   - ESLint 10.x
+   - PostgreSQL 18.6-alpine (`pgdata:/var/lib/postgresql`)
+   - Redis 8.10.3-alpine (password authenticated)
+   - RabbitMQ 4.4.0-management-alpine
+4. Do not start product features (link CRUD, auth, redirects) — M1 is infrastructure only.
+5. Do not generate empty migration files in Drizzle.
 
-First, inspect the repository and read AGENTS.md, .agents/rules/implementation-workflow.md, docs/ANTIGRAVITY-HANDOFF.md, docs/PRD.md, docs/ARCHITECTURE.md, docs/SECURITY-CHECKLIST.md, docs/ROADMAP.md, all current ADRs, docs/milestones/M0/M0-OPEN-QUESTIONS.md, and docs/memory/CURRENT-STATUS.md.
+## M1 implementation order
 
-Then report:
-1. Your concise understanding of Pulse, its purpose, constraints and approved baseline stack.
-2. The rules you will follow while working with me.
-3. The current milestone and what is/is not implemented.
-4. Every unresolved M0 decision, with trade-offs and a recommendation, without silently deciding.
-5. Any contradictions, missing requirements, security concerns or documentation gaps you found.
+1. Root workspace: `pnpm-workspace.yaml`, root `package.json`, root `tsconfig.json`, `.node-version`.
+2. Shared config package (`packages/config`): TypeScript base configs, ESLint flat config (`eslint.config.mjs`), Prettier.
+3. Shared package (`packages/shared`): Zod env validation schemas, native `crypto.randomUUID()` utilities, common types.
+4. Database package (`packages/database`): Drizzle config and CLI migration tooling (zero empty migration files).
+5. API skeleton (`apps/api`): Express 5.3, Helmet baseline headers, `/health` (liveness), `/ready` (startup readiness), structured JSON logging, correlation IDs.
+6. Web skeleton (`apps/web`): Next.js 16.4.3, proxy rewrite config for `/api/v1/*`, minimal page.
+7. Worker skeleton (`apps/worker`): Startup log, graceful SIGINT/SIGTERM shutdown.
+8. Local environment setup: Copy `.env.example` to `.env` (via PowerShell or Bash) and populate matching connection URLs before invoking Docker.
+9. Docker Compose (`docker-compose.yml`): PostgreSQL 18.6, Redis 8.10.3, RabbitMQ 4.4.0 bound strictly to `127.0.0.1` with required `.env` interpolation and health checks.
+10. Test infrastructure: Vitest 5.x, Supertest wired to Express, API health and security headers tests.
+11. CI (`.github/workflows/ci.yml`): Verified full-length commit SHAs, `permissions: contents: read`, Dependabot for npm, actions, and docker.
+12. Documentation: README setup runbook with Windows PowerShell instructions.
 
-Do not change files or create application code during this review. After I approve the M0 decisions, propose a focused M1 repository/runtime foundation plan with scope, file changes, dependencies, acceptance criteria, risks, tests and documentation updates. Wait for my approval before implementing.
+## Key constraints
 
-Remember: I am learning this stack. Explain the important engineering concepts and interview-relevant trade-offs as we work. Never claim a test, build, scan, benchmark or deployment succeeded unless you actually ran and verified it.
-```
+- pnpm workspaces, no Turborepo. Exact pnpm version pinned.
+- Express 5.3 with native async handlers and Helmet; Node 24 Maintenance LTS baseline.
+- Docker services bound strictly to `127.0.0.1`; credentials required from `.env`.
+- Native `crypto.randomUUID()`; no `cors`, no `nanoid`, no `concurrently`.
+- ESLint flat configuration only (`eslint.config.mjs`).
+- No database dependency checks in `/ready` until clients are implemented in M2+.
+- No secrets committed; safe `.env.example`.
 
-## M1 planning guardrail
+## M1 exit criteria
 
-M1 is infrastructure and developer-experience foundation only. Do not start with link CRUD or redirect features. First make the repository, TypeScript setup, Docker Compose dependencies, environment validation, health checks, migrations, test harness and CI repeatable.
+- `git clone` + `.env` setup + `docker compose up -d` + `pnpm dev` → working environment.
+- Containers healthy on `127.0.0.1`.
+- Express responds `200` to `/health` and `/ready` with expected security headers.
+- Strict TypeScript compiles with zero errors.
+- ESLint flat config passes with zero warnings.
+- API health and security tests pass via `pnpm test`.
+- CI succeeds on GitHub Actions with pinned SHAs.
+- README accurately describes setup.
