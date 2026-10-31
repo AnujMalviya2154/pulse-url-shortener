@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Build output
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local database / broker volumes
+.local-data/
+.pgdata/
+.redis-data/
+.rabbitmq-data/
+
+# Temporary files
+.tmp/
+.temp/
